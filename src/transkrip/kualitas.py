@@ -59,7 +59,9 @@ def perkiraan(segmen, interval, baris):
 
     if not kata or detik_bicara == 0:
         return {"detik_bicara": round(detik_bicara), "jumlah_kata": len(kata), "cakupan": 0, "yakin": 0,
-                "rata_prob": 0, "detik_tidak_terdengar": 0, "skor": 0, "nilai": "Kosong" if not kata else "Buruk"}
+                "rata_prob": 0, "detik_tidak_terdengar": 0, "skor": 0,
+                # Ada suara tapi tidak ada kata (mis. musik/noise) beda dengan rekaman hening ("Kosong").
+                "nilai": "Tanpa ucapan" if not kata else "Buruk"}
 
     # Kata Whisper cenderung pendek; beri sedikit kelonggaran 0,3 detik di kanan-kiri.
     ruang_kata = satukan([(m - 0.3, s + 0.3) for m, s, _, _ in kata])
@@ -82,8 +84,8 @@ def perkiraan(segmen, interval, baris):
 
 def ringkas(k):
     """Satu baris ringkasan untuk header transkrip."""
-    if k["nilai"] == "Kosong":
-        return "Kosong (tidak ada ucapan yang tertangkap)"
+    if k["nilai"] in ("Kosong", "Tanpa ucapan"):
+        return f"{k['nilai']} (tidak ada ucapan yang tertangkap)"
     return (
         f"{k['nilai']} (skor {k['skor']:.0%}) - {k['cakupan']:.0%} waktu bicara tertangkap, "
         f"{k['yakin']:.0%} kata yakin, {k['detik_tidak_terdengar']} detik tidak terdengar"
@@ -93,6 +95,7 @@ def ringkas(k):
 # ---------------------------------------------------------------------- WER --
 def normalisasi(teks):
     """Huruf kecil, buang tanda baca & penanda kita, supaya yang dibandingkan hanya katanya."""
+    teks = re.sub(r"^\s*#.*$", " ", teks, flags=re.M)  # baris komentar/petunjuk
     teks = re.sub(r"^\s*\[\d\d:\d\d:\d\d\][^:]*:", " ", teks, flags=re.M)  # buang "[00:00:12] Pembicara 1:"
     teks = re.sub(r"\[tidak terdengar[^\]]*\]", " ", teks)
     teks = teks.replace("[tidak jelas:", " ").replace("(?)", "")

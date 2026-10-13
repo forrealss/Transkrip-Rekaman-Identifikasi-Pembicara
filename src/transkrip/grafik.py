@@ -1,4 +1,4 @@
-"""Grafik kualitas & akurasi (matplotlib -> PNG).
+﻿"""Grafik kualitas & akurasi (matplotlib -> PNG).
 
 Aturan tampilan:
 - satu sumbu saja, nilai 0-100%
@@ -24,7 +24,9 @@ STATUS = {
     "Kurang": "#ec835a",
     "Buruk": "#d03b3b",
     "Kosong": "#c3c2b7",
+    "Tanpa ucapan": "#c3c2b7",
 }
+TANPA_DATA = ("Kosong", "Tanpa ucapan")
 BATAS_NILAI = [(0.30, "Kurang"), (0.50, "Cukup"), (0.70, "Baik")]
 
 
@@ -41,7 +43,7 @@ def _gaya(ax):
 
 
 def _rapikan_nama(nama, maks=28):
-    return nama if len(nama) <= maks else nama[: maks - 1] + "…"
+    return nama if len(nama) <= maks else nama[: maks - 1] + "â€¦"
 
 
 def grafik_kualitas(baris, path, catatan=""):
@@ -63,8 +65,12 @@ def grafik_kualitas(baris, path, catatan=""):
     for i, x in zip(y, k):
         ax1.barh(i, max(x["skor"], 0.004), height=0.6, color=STATUS[x["nilai"]], zorder=2)
         ax1.text(max(x["skor"], 0) + 0.012, i, f"{x['skor']:.0%}  {x['nilai']}", va="center",
-                 color=TINTA if x["nilai"] != "Kosong" else REDUP, fontsize=9)
+                 color=TINTA if x["nilai"] not in TANPA_DATA else REDUP, fontsize=9)
     ax1.set_yticks(list(y), nama, color=TINTA)
+    # ruang ekstra di kanan supaya tulisan "95%  Baik" tidak terpotong panel sebelah
+    ax1.set_xlim(0, 1.22)
+    ax1.set_xticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    ax1.spines["bottom"].set_bounds(0, 1.0)
     ax1.set_title("Skor kualitas (perkiraan)", loc="left", color=TINTA, fontsize=11, fontweight="bold", pad=18)
 
     # Panel 2: dua komponen skor, berdampingan
@@ -75,11 +81,12 @@ def grafik_kualitas(baris, path, catatan=""):
         ax2.barh([i + geser for i in y], [max(x[kunci], 0.004) for x in k], height=h - 0.04,
                  color=SERI[j], label=label, zorder=2)
     for i, x in zip(y, k):
-        if x["nilai"] != "Kosong":
+        if x["nilai"] not in TANPA_DATA:
             ax2.text(x["cakupan"] + 0.012, i + h / 2, f"{x['cakupan']:.0%}", va="center", color=TINTA_2, fontsize=8)
             ax2.text(x["yakin"] + 0.012, i - h / 2, f"{x['yakin']:.0%}", va="center", color=TINTA_2, fontsize=8)
         else:
-            ax2.text(0.012, i, "tidak ada suara", va="center", color=REDUP, fontsize=8)
+            ax2.text(0.012, i, "tidak ada suara" if x["nilai"] == "Kosong" else "tidak ada ucapan",
+                     va="center", color=REDUP, fontsize=8)
     ax2.set_title("Komponen skor", loc="left", color=TINTA, fontsize=11, fontweight="bold", pad=18)
     ax2.legend(loc="lower right", frameon=False, fontsize=9, labelcolor=TINTA_2,
                bbox_to_anchor=(1.0, 1.0), ncol=2, borderaxespad=0.2)
@@ -108,7 +115,7 @@ def grafik_evaluasi(hasil, path, judul="Akurasi per setelan", catatan=""):
     # rincian kesalahan ditaruh di bawah nama setelan, bukan di area grafik
     ax.set_yticks(
         list(y),
-        [f"{label}\nsalah {s['salah_ganti']} · hilang {s['hilang']} · tambah {s['tambahan']} · {dt:.0f} detik"
+        [f"{label}\nsalah {s['salah_ganti']} Â· hilang {s['hilang']} Â· tambah {s['tambahan']} Â· {dt:.0f} detik"
          for label, s, dt in hasil],
         color=TINTA, fontsize=9,
     )

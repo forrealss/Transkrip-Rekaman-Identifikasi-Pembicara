@@ -26,6 +26,8 @@ Rekaman (m4a/mp3/wav/...) → teks percakapan berlabel pembicara:
 
 ![Grafik kualitas: skor per rekaman dengan nilai Baik/Cukup/Kurang/Buruk/Kosong, dan komponennya (ucapan tertangkap & kata yakin)](docs/contoh-grafik-kualitas.png)
 
+*Data asli dari rekaman yang sudah diproses (bukan contoh).*
+
 - **Kiri, Skor kualitas**: satu batang per rekaman. Warna dan tulisan di ujung batang menunjukkan nilainya. Garis putus-putus adalah batas Kurang (30%), Cukup (50%), dan Baik (70%).
 - **Kanan, Komponen skor**:
   - *Ucapan tertangkap* (biru): dari seluruh waktu orang bicara, berapa persen yang berhasil jadi teks. Kalau rendah, banyak bagian yang `[tidak terdengar]`.
@@ -39,11 +41,9 @@ Nilai di laporan kualitas hanya **perkiraan**. Untuk akurasi sebenarnya:
 2. Dengarkan, lalu ketik apa adanya ke `referensi/eval_rec9.txt`.
 3. `python evaluasi.py work/eval_rec9.wav referensi/eval_rec9.txt --model large-v3 large-v3-turbo --bersihkan --prompt`
 
-Hasilnya berupa tabel akurasi (100% − WER) untuk setiap kombinasi setelan, diurutkan dari yang terbaik, plus grafik `output/_grafik_evaluasi_<nama potongan>.png`:
+Hasilnya berupa tabel akurasi (100% − WER) untuk setiap kombinasi setelan, diurutkan dari yang terbaik, plus grafik `output/_grafik_evaluasi_<nama potongan>.png`.
 
-![Contoh grafik evaluasi: akurasi tiap kombinasi setelan, batang biru tua = setelan terbaik (angka contoh, bukan hasil uji)](docs/contoh-grafik-evaluasi.png)
-
-*Angka di gambar ini hanya contoh tampilan, bukan hasil uji sungguhan.*
+> **Status:** belum ada kunci jawaban, jadi **belum ada angka akurasi sungguhan**. Grafik akurasi akan ditambahkan ke sini setelah transkrip manual pertama dibuat.
 
 - Batang **biru tua** adalah setelan dengan akurasi tertinggi; pakai setelan ini untuk `proses_semua.py`.
 - Di bawah nama setelan tertulis rincian kesalahannya: *salah* (kata tertukar), *hilang* (kata tidak tertangkap), *tambah* (kata yang dikarang model), dan waktu proses.
@@ -95,16 +95,41 @@ Semua hasil di proyek ini dibuat dengan perangkat berikut. Setiap transkrip juga
 | Speech-to-text | faster-whisper 1.2.1 (ctranslate2 4.8.2), model **large-v3**, mode `int8_float16` |
 | Pengenal pembicara | pyannote.audio 4.0.7, model **speaker-diarization-community-1**, TF32 aktif |
 
-Kecepatan terukur di perangkat ini:
+Kecepatan terukur di perangkat ini (batch 13 Okt 2026, dari `output/_laporan_kualitas.txt`):
 
-| Tahap | Hasil uji | Catatan |
-|---|---|---|
-| Speech-to-text (Whisper large-v3) | 28 mnt → 55 detik (`Recording (10)`, banyak hening)<br>103 mnt → 9,9 menit (`Recording (5)`, padat bicara) | **±10–30x** lebih cepat dari durasi. Makin padat percakapan, makin lama. |
-| Pengenal pembicara (pyannote) | 28 mnt → 100 detik | ±17x. Sebelum TF32 dinyalakan, ±6x lebih lambat. |
-| **Perkiraan total** | 1 jam rekaman ≈ **5–10 menit** | Angka nyata per rekaman ada di kolom *Proses* & *Kecepatan* di laporan |
-| Pemakaian VRAM | ±4 GB dari 6 GB | Whisper & pyannote dijalankan bergantian |
+| Rekaman | Durasi | Waktu proses | Kecepatan |
+|---|---|---|---|
+| `Recording (5)` | 1 j 43 m | 15,4 menit | 7x |
+| `Recording (6)` | 1 j 30 m | 13,2 menit | 7x |
+| `Recording (10)` | 28 m | 2,6 menit | 11x |
+| `Recording (9)` | 18 m | 2,0 menit | 9x |
+| `Recording (8)` | 14 m | 1,4 menit | 10x |
+| **Total** | **4,2 jam** (rekaman bersuara) | **36 menit** | **7x**, jadi 1 jam rekaman ≈ **8–9 menit** |
 
-Di GPU lain kecepatannya berbeda. Tanpa GPU NVIDIA (CPU saja) program tetap jalan, tapi bisa 10–30x lebih lambat. Kolom **Proses** dan **Kecepatan** di `_laporan_kualitas.txt` menunjukkan angka nyata tiap rekaman.
+- Makin padat percakapan, makin lama prosesnya. Rekaman yang banyak heningnya lebih cepat.
+- Pengenal pembicara sebelum TF32 dinyalakan sekitar 6x lebih lambat (diukur pada potongan 2 menit: 34,6 menjadi 6,0 detik).
+
+### Pemakaian GPU saat proses
+
+![Task Manager saat transkripsi: GPU 3D 93%, Dedicated GPU memory sekitar 4 dari 6 GB](docs/gpu-saat-proses.png)
+
+*Task Manager → Performance → GPU, saat `proses_semua.py` berjalan. GPU (grafik 3D) hampir penuh terus, dan VRAM terpakai ±4 dari 6 GB.*
+
+Rata-rata hasil pengukuran (`nvidia-smi`, 1 sampel/detik, dihitung dengan `python statistik_gpu.py`):
+
+| Tahap | Lama diukur | GPU rata-rata | GPU median | VRAM rata-rata | VRAM maks | Daya rata-rata | Suhu maks |
+|---|---|---|---|---|---|---|---|
+| Speech-to-text (Whisper) | 15,7 menit | 70% | 78% | 3,8 GB | 5,3 GB | 49 W | 82 °C |
+| Pengenal pembicara (pyannote) | 12,5 menit | **94%** | 100% | 3,8 GB | 4,3 GB | 68 W | 87 °C |
+| **Selama proses (gabungan)** | **28,2 menit** | **81%** | 91% | 3,8 GB | 5,3 GB | 57 W | 87 °C |
+
+*1.760 sampel (13 Okt 2026, 14:05–14:36), saat memproses `Recording (6)` s.d. `test.mp3`. VRAM total 6 GB.*
+
+- **GPU rata-rata 81%**: GPU hampir selalu sibuk. Pyannote memakai GPU lebih penuh (94%) daripada Whisper (70%). Kemungkinan karena sebagian pekerjaan Whisper (deteksi suara/VAD, pemilihan kata) berjalan di CPU, jadi GPU sesekali menunggu.
+- **VRAM maksimum 5,3 dari 6 GB**: masih muat, tapi tipis. Jangan menjalankan game atau aplikasi berat lain yang memakai GPU selama proses.
+- **Suhu sampai 87 °C**: normal untuk GPU laptop saat beban penuh. Pastikan ventilasi laptop tidak tertutup dan colok ke charger.
+
+Di GPU lain kecepatannya berbeda. Tanpa GPU NVIDIA (CPU saja) program tetap jalan, tapi jauh lebih lambat (belum diukur). Kolom **Proses** dan **Kecepatan** di `_laporan_kualitas.txt` menunjukkan angka nyata tiap rekaman.
 
 ## Git: apa yang di-push dan tidak
 
@@ -116,6 +141,7 @@ Diatur di `.gitignore`:
 | `assets/*` | Rekaman wawancara (data perusahaan, ukurannya besar). **Kecuali `assets/test/`**: taruh rekaman uji pendek yang boleh dibagikan di sini. |
 | `output/` | Transkrip dan laporan berisi isi wawancara. |
 | `referensi/*` | Transkrip manual untuk evaluasi, juga berisi isi wawancara. |
+| `rekaman_dilewati/` | Rekaman yang sengaja tidak diproses (dipindah dari `assets/`). |
 | `work/`, `.venv/`, `__pycache__/` | File sementara dan lingkungan Python; bisa dibuat ulang. |
 
 Setelah clone di komputer lain: buat venv dan pasang paket (lihat di bawah), salin `.env.example` jadi `.env`, lalu taruh rekaman di `assets/`.
@@ -144,6 +170,7 @@ Setelah clone di komputer lain: buat venv dan pasang paket (lihat di bawah), sal
 | 7 | `proses_semua.py` | Batch semua rekaman |
 | 7 | `src/transkrip/kualitas.py`, `laporan_kualitas.py`, `evaluasi.py` | Skor kualitas (perkiraan) dan akurasi WER (dengan kunci jawaban) |
 | 7 | `src/transkrip/grafik.py` | Grafik kualitas & akurasi (matplotlib) |
+| 7 | `catat_gpu.ps1`, `statistik_gpu.py` | Catat pemakaian GPU tiap detik, lalu hitung rata-rata per tahap |
 
 Latihan dijalankan berurutan pada potongan pendek supaya cepat:
 ```bash

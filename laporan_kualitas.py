@@ -1,4 +1,4 @@
-"""Ringkasan kualitas semua transkrip di output/ -> output/_laporan_kualitas.txt + _grafik_kualitas.png
+﻿"""Ringkasan kualitas semua transkrip di output/ -> output/_laporan_kualitas.txt + _grafik_kualitas.png
 
 Contoh:
   python laporan_kualitas.py
@@ -63,16 +63,19 @@ def main():
             k = kualitas.perkiraan(data.get("segmen_whisper") or [], data.get("interval_pembicara") or [], data.get("baris") or [])
         dur = ke_detik(info.get("Durasi"))
         proses = waktu_proses(data)
-        if dur and proses and not kosong:
+        if dur and proses and k["nilai"] not in ("Kosong", "Tanpa ucapan"):
             total_rekaman += dur
             total_proses += proses
         baris_laporan.append((p.stem, info.get("Durasi", "?"), vol_teks, k, proses, dur))
 
     # Hasil lama belum menyimpan spesifikasi; semuanya diproses di komputer ini, jadi pakai info saat ini.
     sistem = sistem or info_sistem()
+    # Format lama hanya menulis "large-v3"; kalau sudah ada versi lengkapnya, pakai yang lengkap saja.
+    if any("Whisper" in m for m in model):
+        model = {m for m in model if "Whisper" in m}
 
     lebar = max([len(n) for n, *_ in baris_laporan] + [10])
-    judul = (f"{'Rekaman':{lebar}}  {'Durasi':8}  {'Volume':9}  {'Nilai':6}  {'Skor':>5}  {'Tertangkap':>10}  "
+    judul = (f"{'Rekaman':{lebar}}  {'Durasi':8}  {'Volume':9}  {'Nilai':12}  {'Skor':>5}  {'Tertangkap':>10}  "
              f"{'Yakin':>6}  {'Tdk dengar':>10}  {'Kata':>6}  {'Proses':>9}  {'Kecepatan':>9}")
     isi = [
         "LAPORAN KUALITAS TRANSKRIP (perkiraan otomatis, bukan akurasi pasti)",
@@ -86,15 +89,16 @@ def main():
         "  Yakin       = % kata yang tidak ditandai (?) / [tidak jelas]",
         "  Skor        = Tertangkap x Yakin.  Baik >= 70%, Cukup >= 50%, Kurang >= 30%, Buruk < 30%",
         "  Kosong      = rekaman tanpa suara sama sekali (cek mikrofon saat merekam)",
+        "  Tanpa ucapan= ada suara (noise/musik), tapi tidak ada kata yang tertangkap",
         "  Kecepatan   = durasi rekaman / waktu proses (mis. 10x = 1 jam rekaman selesai dalam 6 menit)",
         "",
         judul,
         "-" * len(judul),
     ]
     for nama, durasi, vol, k, proses, dur in baris_laporan:
-        cepat = f"{dur / proses:.0f}x" if dur and proses and k["nilai"] != "Kosong" else "-"
+        cepat = f"{dur / proses:.0f}x" if dur and proses and k["nilai"] not in ("Kosong", "Tanpa ucapan") else "-"
         isi.append(
-            f"{nama:{lebar}}  {durasi:8}  {vol:9}  {k['nilai']:6}  {k['skor']:>5.0%}  {k['cakupan']:>10.0%}  "
+            f"{nama:{lebar}}  {durasi:8}  {vol:9}  {k['nilai']:12}  {k['skor']:>5.0%}  {k['cakupan']:>10.0%}  "
             f"{k['yakin']:>6.0%}  {str(k['detik_tidak_terdengar']) + 's':>10}  {k['jumlah_kata']:>6}  "
             f"{format_menit(proses):>9}  {cepat:>9}"
         )

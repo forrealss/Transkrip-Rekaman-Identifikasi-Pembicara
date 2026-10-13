@@ -34,3 +34,6 @@ __pycache__/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Rekaman yang sengaja tidak diproses (tetap tidak di-push)
+rekaman_dilewati/
