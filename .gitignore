@@ -1,0 +1,36 @@
+# --- Rahasia ------------------------------------------------------------------
+# Token Hugging Face. Yang boleh di-push hanya .env.example (tanpa token asli).
+.env
+.env.*
+!.env.example
+
+# --- Rekaman (data perusahaan, besar) ------------------------------------------
+# Semua rekaman di assets/ TIDAK di-push, kecuali file uji di assets/test/.
+assets/*
+!assets/test/
+!assets/.gitkeep
+
+# --- Hasil transkrip & laporan (berisi isi wawancara) --------------------------
+output/
+
+# --- Transkrip manual untuk evaluasi (berisi isi wawancara) --------------------
+referensi/*
+!referensi/.gitkeep
+
+# --- File sementara (WAV hasil konversi, potongan uji, log) --------------------
+work/
+
+# --- Lingkungan Python ---------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# --- Cache model / editor / OS -------------------------------------------------
+.cache/
+.ipynb_checkpoints/
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store

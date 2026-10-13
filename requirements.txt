@@ -1,0 +1,14 @@
+﻿# Pasang dengan:
+#   python -m uv pip install -p .venv -r requirements.txt --index-strategy unsafe-best-match
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+torch==2.11.*
+torchaudio==2.11.*
+pyannote.audio>=4.0
+faster-whisper>=1.2
+# DLL CUDA 12 untuk ctranslate2 (mesin faster-whisper) di Windows
+nvidia-cublas-cu12
+nvidia-cudnn-cu12>=9,<10
+soundfile
+gradio
+python-dotenv
