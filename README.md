@@ -131,21 +131,6 @@ Rata-rata hasil pengukuran (`nvidia-smi`, 1 sampel/detik, dihitung dengan `pytho
 
 Di GPU lain kecepatannya berbeda. Tanpa GPU NVIDIA (CPU saja) program tetap jalan, tapi jauh lebih lambat (belum diukur). Kolom **Proses** dan **Kecepatan** di `_laporan_kualitas.txt` menunjukkan angka nyata tiap rekaman.
 
-## Git: apa yang di-push dan tidak
-
-Diatur di `.gitignore`:
-
-| Tidak di-push | Alasan |
-|---|---|
-| `.env` | Berisi token Hugging Face. Yang di-push hanya `.env.example`. |
-| `assets/*` | Rekaman wawancara (data perusahaan, ukurannya besar). **Kecuali `assets/test/`**: taruh rekaman uji pendek yang boleh dibagikan di sini. |
-| `output/` | Transkrip dan laporan berisi isi wawancara. |
-| `referensi/*` | Transkrip manual untuk evaluasi, juga berisi isi wawancara. |
-| `rekaman_dilewati/` | Rekaman yang sengaja tidak diproses (dipindah dari `assets/`). |
-| `work/`, `.venv/`, `__pycache__/` | File sementara dan lingkungan Python; bisa dibuat ulang. |
-
-Setelah clone di komputer lain: buat venv dan pasang paket (lihat di bawah), salin `.env.example` jadi `.env`, lalu taruh rekaman di `assets/`.
-
 ## Persiapan sekali saja (sudah dilakukan)
 
 1. ffmpeg: `winget install Gyan.FFmpeg`
